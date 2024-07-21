@@ -8,11 +8,9 @@ class Scene2 extends Phaser.Scene {
 
     this.enter = this.input.keyboard.addKey("ENTER");
     this.enterJustDown = false;
-    this.giantSawThePlayer = false;
     this.giantSpawnLocationX = Phaser.Math.Between(2000, 3000);
-    this.giantWalkIdleCycleFinished = false;
     this.playerIsAlive = true;
-    this.playerRecentXPosition = 0;
+    this.playerRecentXPosition = null;
     this.playerIsHiding = false;
     // Is set often to 400 for testing purposes:
     this.playerVelocity = 400; // Return to 30 later
@@ -21,11 +19,16 @@ class Scene2 extends Phaser.Scene {
     this.giantSearchVelocity = 35;
     this.giantDetectRadius = 400;
     this.giantLoseRadius = 1500;
-    this.giantStartedSearching = false;
-    this.searchTime = 5000; // in ms
-    this.dispatchedTimer = null;
+    this.searchTime = 20000; // in ms
     this.hidingDistance = 0;
     this.hidingDetectionRange = 300;
+    this.randomIdleTimeFrom = 2; // in seconds
+    this.randomIdleTimeTo = 6; // in seconds (inclusive)
+    this.randomWalkTimeFrom = 10; // in seconds
+    this.randomWalkTimeTo = 21; // in seconds (inclusive)
+    this.giantWalkIdleCycleFinished = false;
+    this.idleTimer = null;
+    this.walkTimer = null;
 
     this.physics.world.setBounds(0, -600, 4200, 1200);
 
@@ -88,146 +91,76 @@ class Scene2 extends Phaser.Scene {
       this.physics.world.bounds.width,
       this.physics.world.bounds.height
     );
-
-    this.giantMove();
-
-    this.idleTimer = this.time.addEvent();
-    this.walkTimer = this.time.addEvent();
+    this.giantWalkIdleCycle();
   }
 
   // TODO - Add friction to the player with the ground when the player dies
-
-  playerMove() {
-    if (this.playerIsAlive) {
-      if (!this.playerIsHiding) {
-        if (this.cursors.right.isDown) {
-          this.player.setVelocityX(this.playerVelocity);
-        } else if (this.cursors.left.isDown) {
-          this.player.setVelocityX(-this.playerVelocity);
-        } else {
-          this.player.setVelocityX(0);
-        }
-      }
-    }
+  /**
+   * Moves the giant with a given speed at a given direction
+   *
+   * @param {number} velocity The velocity of the giant
+   * @param {number} direction The direction the giant is moving in
+   */
+  giantMove(velocity, direction) {
+    this.giant.setVelocityX(velocity * direction);
   }
 
-  giantMove() {
-    this.waitTime = Phaser.Math.Between(2, 6) * 1000;
-    this.moveTime = Phaser.Math.Between(10, 21) * 1000;
-    this.direction = Phaser.Math.Between(0, 1) == 0 ? -1 : 1;
+  giantWalkIdleCycle() {
+    this.randomDirection = Phaser.Math.Between(0, 1) == 0 ? -1 : 1;
+    this.randomIdleTime =
+      Phaser.Math.Between(this.randomIdleTimeFrom, this.randomIdleTimeTo) *
+      1000;
+    this.randomWalkTime =
+      Phaser.Math.Between(this.randomWalkTimeFrom, this.randomWalkTimeTo) *
+      1000;
 
-    this.giantIdleThenWalk();
-  }
-
-  giantIdleThenWalk() {
     this.giant.setVelocityX(0);
-    this.dispatchedTimer = "idle";
+
+    console.log("Idle timer started!");
     this.idleTimer = this.time.addEvent({
-      delay: this.waitTime,
+      delay: this.randomIdleTime,
       callback: () => {
-        this.giantWalk();
+        this.giantMove(this.giantWalkVelocity, this.randomDirection);
+
+        console.log("Walk timer started!");
+        this.walkTimer = this.time.addEvent({
+          delay: this.randomWalkTime,
+          callback: () => {
+            this.giantWalkIdleCycleFinished = true;
+          },
+        });
       },
     });
   }
 
-  giantWalk() {
-    this.giant.setVelocityX(this.direction * this.giantWalkVelocity);
-    this.dispatchedTimer = "walk";
-    this.walkTimer = this.time.addEvent({
-      delay: this.moveTime,
-      callback: () => {
-        this.giantWalkIdleCycleFinished = true;
-      },
-    });
-  }
-
-  giantDetect() {
-    // Logic for this method:
-    // if the giant saw the player and the player was alive and within range,
-    // then chase him. Else if the giant saw the player and (the player
-    // went out of range) or (the player hid in a bush and the player was a
-    // distance of 500 or more), search for him.
-    this.distance = this.player.x - this.giant.x;
-    this.hidingDistance = this.playerRecentXPosition - this.giant.x;
-    this.playerIsWithinGiantDetectRadius =
-      !this.giantSawThePlayer &&
-      this.playerIsAlive &&
-      Math.abs(this.distance) <= this.giantDetectRadius;
-
-    this.playerIsOutOfRange =
-      this.giantSawThePlayer &&
-      this.playerIsAlive &&
-      (Math.abs(this.distance > this.giantLoseRadius) ||
-        (this.playerIsHiding &&
-          Math.abs(this.hidingDistance) > this.hidingDetectionRange));
-
-    if (this.playerIsWithinGiantDetectRadius) {
-      this.giantWalkIdleCycleFinished = false;
-      this.giantSawThePlayer = true;
-      this.stopWalkIdleCycle();
-      this.giantChase();
-    } else if (this.playerIsOutOfRange && !this.giantStartedSearching) {
-      this.giantSawThePlayer = false;
-      this.giantStartedSearching = true;
-      this.giantSearch();
-    }
-    if (!this.playerIsAlive) {
-      this.giantSawThePlayer = false;
-      this.restoreWalkIdleCycle();
+  giantDetectPlayer() {
+    if (Math.abs(this.distanceBetweenPlayerAndGiant) < this.giantDetectRadius) {
+      this.giantChasePlayer();
+      console.log("Player detected!");
     }
   }
 
-  stopWalkIdleCycle() {
-    if (this.dispatchedTimer == "idle") {
-      this.idleTimer.paused = true;
-      console.log("Paused idleTimer");
-    }
-    if (this.dispatchedTimer == "walk") {
-      this.walkTimer.paused = true;
-      console.log("Paused walkTimer");
-    }
-  }
-
-  restoreWalkIdleCycle() {
-    if (this.dispatchedTimer == "idle") {
-      this.giant.setVelocityX(0);
-      this.idleTimer.paused = false;
-      console.log("Resumed idleTimer");
-    }
-    if (this.dispatchedTimer == "walk") {
-      this.giant.setVelocityX(this.direction * this.giantWalkVelocity);
-      this.walkTimer.paused = false;
-      console.log("Resumed walkTimer");
-    }
-  }
-
-  giantChase() {
-    if (this.distance < 0) {
+  /**
+   * Causes the giant to walk towards the player's
+   * direction
+   */
+  giantChasePlayer() {
+    if (this.distanceBetweenPlayerAndGiant < 0) {
       this.giant.setVelocityX(-this.giantChaseVelocity);
-    } else if (this.distance > 0) {
+    } else if (this.distanceBetweenPlayerAndGiant > 0) {
       this.giant.setVelocityX(this.giantChaseVelocity);
-    } else if (Math.round(this.distance) == 0) {
+    } else {
       this.giant.setVelocityX(0);
     }
   }
 
-  giantSearch() {
-    if (this.distance < 0) {
-      this.giant.setVelocityX(-this.giantSearchVelocity);
-    } else if (this.distance > 0) {
-      this.giant.setVelocityX(this.giantSearchVelocity);
-    }
-    this.time.addEvent({
-      delay: this.searchTime,
-      callback: () => {
-        this.giantStartedSearching = false;
-        this.restoreWalkIdleCycle();
-      },
-    });
-  }
-
+  /**
+   * Causes the player to die if the player is not hiding.
+   * Also, causes the player to fly up and rotate when he
+   * dies.
+   */
   giantKill() {
-    if (this.playerIsAlive == true) {
+    if (this.playerIsAlive) {
       if (!this.playerIsHiding) {
         this.playerIsAlive = false;
         this.player.setVelocityY(-300);
@@ -242,6 +175,25 @@ class Scene2 extends Phaser.Scene {
           this.player.body.height / 2,
           this.player.body.width / 2
         );
+      }
+    }
+  }
+
+  /**
+   * Allows the player to move to the left or right
+   * if not dead and not hiding. Uses arrow keys.
+   * Depends on createCursorKeys method from Phaser.
+   */
+  playerMove() {
+    if (this.playerIsAlive) {
+      if (!this.playerIsHiding) {
+        if (this.cursors.right.isDown) {
+          this.player.setVelocityX(this.playerVelocity);
+        } else if (this.cursors.left.isDown) {
+          this.player.setVelocityX(-this.playerVelocity);
+        } else {
+          this.player.setVelocityX(0);
+        }
       }
     }
   }
@@ -276,12 +228,16 @@ class Scene2 extends Phaser.Scene {
   }
 
   update() {
-    this.giantDetect();
+    this.distanceBetweenPlayerAndGiant = Math.round(
+      this.player.x - this.giant.x
+    );
+
     this.playerMove();
+    this.giantDetectPlayer();
+
     if (this.giantWalkIdleCycleFinished) {
       this.giantWalkIdleCycleFinished = false;
-      this.giantMove();
+      this.giantWalkIdleCycle();
     }
-    console.log(this.giantWalkIdleCycleFinished);
   }
 }
