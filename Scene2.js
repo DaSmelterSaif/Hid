@@ -8,13 +8,13 @@ class Scene2 extends Phaser.Scene {
 
     this.enter = this.input.keyboard.addKey("ENTER");
     this.enterJustDown = false;
-    // Is redundant. Remove if found not needed in the future
     this.giantSawThePlayer = false;
-    this.giantSpawnLocationX = Phaser.Math.Between(1000, 2000);
+    this.giantSpawnLocationX = Phaser.Math.Between(2000, 3000);
     this.giantWalkIdleCycleFinished = false;
     this.playerIsAlive = true;
     this.playerRecentXPosition = 0;
     this.playerIsHiding = false;
+    // Is set often to 400 for testing purposes:
     this.playerVelocity = 400; // Return to 30 later
     this.giantWalkVelocity = 20;
     this.giantChaseVelocity = 40;
@@ -43,7 +43,15 @@ class Scene2 extends Phaser.Scene {
     this.bush = this.physics.add.staticGroup();
     this.bush.create(500, 505, "bush").setScale(2).refreshBody();
     this.bush.create(900, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(1300, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(1700, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(2100, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(2500, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(2900, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(3300, 505, "bush").setScale(2).refreshBody();
+    this.bush.create(3700, 505, "bush").setScale(2).refreshBody();
 
+    // The ground stretches to the world bounds
     this.platform = this.physics.add
       .staticImage(0, 600, "platform")
       .setOrigin(0, 1);
@@ -57,9 +65,10 @@ class Scene2 extends Phaser.Scene {
 
     this.physics.add.collider(this.giant, this.platform);
     this.physics.add.collider(this.player, this.platform);
-    this.physics.add.overlap(this.player, this.giant, () => {
-      this.giantKill();
-    });
+    // Commented often for testing purposes:
+    // this.physics.add.overlap(this.player, this.giant, () => {
+    //   this.giantKill();
+    // });
     this.bushPlayerCollider = this.physics.add.overlap(
       this.player,
       this.bush,
@@ -86,8 +95,10 @@ class Scene2 extends Phaser.Scene {
     this.walkTimer = this.time.addEvent();
   }
 
+  // TODO - Add friction to the player with the ground when the player dies
+
   playerMove() {
-    if (this.playerIsAlive == true) {
+    if (this.playerIsAlive) {
       if (!this.playerIsHiding) {
         if (this.cursors.right.isDown) {
           this.player.setVelocityX(this.playerVelocity);
@@ -271,5 +282,6 @@ class Scene2 extends Phaser.Scene {
       this.giantWalkIdleCycleFinished = false;
       this.giantMove();
     }
+    console.log(this.giantWalkIdleCycleFinished);
   }
 }
