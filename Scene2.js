@@ -196,6 +196,7 @@ class Scene2 extends Phaser.Scene {
     }
   }
 
+  // TODO - Add a game over screen
   /**
    * Causes the player to die if the player is not hiding.
    * Also, causes the player to fly up and rotate when he
