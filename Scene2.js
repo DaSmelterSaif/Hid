@@ -133,6 +133,7 @@ class Scene2 extends Phaser.Scene {
     this.hidingDistance = this.playerRecentXPosition - this.giant.x;
 
     this.playerIsWithinRange =
+      this.playerIsAlive &&
       !this.playerIsHiding &&
       Math.abs(this.distanceBetweenPlayerAndGiant) < this.giantDetectRadius;
     this.playerIsWithinBushRange =
@@ -157,6 +158,9 @@ class Scene2 extends Phaser.Scene {
       this.giantSeesThePlayer = false;
       this.giantSearchesForPlayer = true;
       console.log("Player lost!");
+    } else if (!this.playerIsAlive && this.giantSeesThePlayer) {
+      this.giantSeesThePlayer = false;
+      this.giantWalkIdleCycleFinished = true;
     }
   }
 
@@ -196,22 +200,26 @@ class Scene2 extends Phaser.Scene {
    * dies.
    */
   giantKill() {
-    if (this.playerIsAlive) {
-      if (!this.playerIsHiding) {
-        this.playerIsAlive = false;
-        this.player.setVelocityY(-300);
-        this.player.setAngularVelocity(-600);
-        this.time.addEvent({
-          delay: 1000,
-          callback: () => {
-            this.player.setAngularDrag(800);
-          },
-        });
-        this.player.body.setSize(
-          this.player.body.height / 2,
-          this.player.body.width / 2
-        );
-      }
+    if (this.playerIsAlive && !this.playerIsHiding) {
+      this.playerIsAlive = false;
+      this.player.setVelocityY(-300);
+      this.player.setAngularVelocity(-600);
+      this.time.addEvent({
+        delay: 1000,
+        callback: () => {
+          this.player.setAngularDrag(800);
+        },
+      });
+      this.player.body.setSize(
+        this.player.body.height / 2,
+        this.player.body.width / 2
+      );
+    } else if (
+      this.playerIsAlive &&
+      this.playerIsHiding &&
+      this.giantSeesThePlayer
+    ) {
+      this.revealPlayer();
     }
   }
 
