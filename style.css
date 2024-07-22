@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Creepster&display=swap");
+
 body {
   display: flex;
   justify-content: center;
@@ -26,10 +28,9 @@ canvas {
   color: hsl(115, 100%, 45%);
   font-size: 1.5em;
   list-style-type: none;
+  font-family: "Creepster", system-ui;
 }
 
 .controls ul::before {
   content: attr(title);
-  /* display: block; */
-  font-weight: bold;
 }
