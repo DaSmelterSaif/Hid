@@ -29,6 +29,8 @@ class Scene2 extends Phaser.Scene {
     this.giantWalkIdleCycleFinished = false;
     this.idleTimer = null;
     this.walkTimer = null;
+    this.giantSeesThePlayer = false;
+    this.giantSearchesForPlayer = false;
 
     this.physics.world.setBounds(0, -600, 4200, 1200);
 
@@ -133,10 +135,31 @@ class Scene2 extends Phaser.Scene {
     });
   }
 
-  giantDetectPlayer() {
-    if (Math.abs(this.distanceBetweenPlayerAndGiant) < this.giantDetectRadius) {
-      this.giantChasePlayer();
+  giantDetectsPlayer() {
+    this.hidingDistance = this.playerRecentXPosition - this.giant.x;
+
+    this.playerIsWithinRange =
+      !this.playerIsHiding &&
+      Math.abs(this.distanceBetweenPlayerAndGiant) < this.giantDetectRadius;
+    this.playerIsWithinBushRange =
+      this.giantSeesThePlayer &&
+      this.playerIsHiding &&
+      Math.abs(this.hidingDistance) < this.hidingDetectionRange;
+    this.playerEscaped =
+      this.giantSeesThePlayer &&
+      Math.abs(this.distanceBetweenPlayerAndGiant) > this.giantLoseRadius;
+    this.playerHid =
+      this.giantSeesThePlayer &&
+      this.playerIsHiding &&
+      Math.abs(this.hidingDistance) > this.hidingDetectionRange;
+
+    if (this.playerIsWithinRange || this.playerIsWithinBushRange) {
+      this.giantSeesThePlayer = true;
       console.log("Player detected!");
+    } else if (this.playerEscaped || this.playerHid) {
+      this.giantSeesThePlayer = false;
+      this.giantSearchesForPlayer = true;
+      console.log("Player lost!");
     }
   }
 
@@ -154,6 +177,21 @@ class Scene2 extends Phaser.Scene {
     }
   }
 
+  giantSearchForPlayer() {
+    if (!this.alreadyStartedSearching) {
+      console.log("Searching for player...");
+      this.giant.setVelocityX(this.direction * this.giantSearchVelocity);
+
+      this.time.addEvent({
+        delay: this.searchTime,
+        callback: () => {
+          this.giantSearchesForPlayer = false;
+          this.alreadyStartedSearching = false;
+          console.log("Search ended!");
+        },
+      });
+    }
+  }
   /**
    * Causes the player to die if the player is not hiding.
    * Also, causes the player to fly up and rotate when he
@@ -231,13 +269,25 @@ class Scene2 extends Phaser.Scene {
     this.distanceBetweenPlayerAndGiant = Math.round(
       this.player.x - this.giant.x
     );
+    if (this.distanceBetweenPlayerAndGiant < 0) {
+      this.direction = -1;
+    } else {
+      this.direction = 1;
+    }
 
     this.playerMove();
-    this.giantDetectPlayer();
+    this.giantDetectsPlayer();
 
     if (this.giantWalkIdleCycleFinished) {
       this.giantWalkIdleCycleFinished = false;
       this.giantWalkIdleCycle();
+    }
+
+    if (this.giantSeesThePlayer) {
+      this.giantChasePlayer();
+    } else if (!this.giantSeesThePlayer && this.giantSearchesForPlayer) {
+      this.giantSearchForPlayer();
+      this.alreadyStartedSearching = true;
     }
   }
 }
