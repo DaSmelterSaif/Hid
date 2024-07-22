@@ -13,10 +13,10 @@ class Scene2 extends Phaser.Scene {
     this.playerRecentXPosition = null;
     this.playerIsHiding = false;
     // Is set often to 400 for testing purposes:
-    this.playerVelocity = 400; // Return to 30 later
-    this.giantWalkVelocity = 20;
-    this.giantChaseVelocity = 40;
-    this.giantSearchVelocity = 35;
+    this.playerVelocity = 50; // Return to 30 after finishing test
+    this.giantWalkVelocity = 40;
+    this.giantChaseVelocity = 60;
+    this.giantSearchVelocity = 55;
     this.giantDetectRadius = 400;
     this.giantLoseRadius = 1500;
     this.searchTime = 20000; // in ms
@@ -71,9 +71,9 @@ class Scene2 extends Phaser.Scene {
     this.physics.add.collider(this.giant, this.platform);
     this.physics.add.collider(this.player, this.platform);
     // Commented often for testing purposes:
-    // this.physics.add.overlap(this.player, this.giant, () => {
-    //   this.giantKill();
-    // });
+    this.physics.add.overlap(this.player, this.giant, () => {
+      this.giantKill();
+    });
     this.bushPlayerCollider = this.physics.add.overlap(
       this.player,
       this.bush,
@@ -119,20 +119,14 @@ class Scene2 extends Phaser.Scene {
     this.giant.setVelocityX(0);
 
     console.log("Idle timer started!");
-    this.idleTimer = this.time.addEvent({
-      delay: this.randomIdleTime,
-      callback: () => {
-        this.giantMove(this.giantWalkVelocity, this.randomDirection);
+    this.idleTimer = setTimeout(() => {
+      this.giantMove(this.giantWalkVelocity, this.randomDirection);
 
-        console.log("Walk timer started!");
-        this.walkTimer = this.time.addEvent({
-          delay: this.randomWalkTime,
-          callback: () => {
-            this.giantWalkIdleCycleFinished = true;
-          },
-        });
-      },
-    });
+      console.log("Walk timer started!");
+      this.walkTimer = setTimeout(() => {
+        this.giantWalkIdleCycleFinished = true;
+      }, this.randomWalkTime);
+    }, this.randomIdleTime);
   }
 
   giantDetectsPlayer() {
@@ -155,6 +149,10 @@ class Scene2 extends Phaser.Scene {
 
     if (this.playerIsWithinRange || this.playerIsWithinBushRange) {
       this.giantSeesThePlayer = true;
+      this.giantWalkIdleCycleFinished = false;
+      clearTimeout(this.idleTimer);
+      clearTimeout(this.walkTimer);
+      // TODO - Make sure that this does not cause a bug with the giant's movement
       console.log("Player detected!");
     } else if (this.playerEscaped || this.playerHid) {
       this.giantSeesThePlayer = false;
@@ -176,7 +174,6 @@ class Scene2 extends Phaser.Scene {
       this.giant.setVelocityX(0);
     }
   }
-
   giantSearchForPlayer() {
     if (!this.alreadyStartedSearching) {
       console.log("Searching for player...");
@@ -187,11 +184,13 @@ class Scene2 extends Phaser.Scene {
         callback: () => {
           this.giantSearchesForPlayer = false;
           this.alreadyStartedSearching = false;
+          this.giantWalkIdleCycleFinished = true;
           console.log("Search ended!");
         },
       });
     }
   }
+
   /**
    * Causes the player to die if the player is not hiding.
    * Also, causes the player to fly up and rotate when he
@@ -281,6 +280,7 @@ class Scene2 extends Phaser.Scene {
     if (this.giantWalkIdleCycleFinished) {
       this.giantWalkIdleCycleFinished = false;
       this.giantWalkIdleCycle();
+      // TODO - Make sure that this does not cause a bug with the giant's movement
     }
 
     if (this.giantSeesThePlayer) {
