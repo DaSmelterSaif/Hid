@@ -1,0 +1,35 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(
+    hsl(115, 100%, 5%),
+    hsl(115, 100%, 20%),
+    hsl(115, 100%, 5%)
+  );
+}
+
+canvas {
+  position: absolute;
+  top: 10vh;
+  border: 3px solid black;
+  border-radius: 10px;
+}
+
+.controls {
+  position: absolute;
+  bottom: 5px;
+}
+
+.controls ul {
+  color: hsl(115, 100%, 45%);
+  font-size: 1.5em;
+  list-style-type: none;
+}
+
+.controls ul::before {
+  content: attr(title);
+  /* display: block; */
+  font-weight: bold;
+}

@@ -107,6 +107,7 @@ class Scene2 extends Phaser.Scene {
     this.giant.setVelocityX(velocity * direction);
   }
 
+  // TODO - Make it so that the giant doesn't approach the world bounds
   giantWalkIdleCycle() {
     this.randomDirection = Phaser.Math.Between(0, 1) == 0 ? -1 : 1;
     this.randomIdleTime =
@@ -177,6 +178,7 @@ class Scene2 extends Phaser.Scene {
       this.giant.setVelocityX(0);
     }
   }
+
   giantSearchForPlayer() {
     if (!this.alreadyStartedSearching) {
       console.log("Searching for player...");
@@ -272,6 +274,7 @@ class Scene2 extends Phaser.Scene {
   }
 
   update() {
+    //Updates the distance between the player and the giant
     this.distanceBetweenPlayerAndGiant = Math.round(
       this.player.x - this.giant.x
     );
@@ -284,6 +287,7 @@ class Scene2 extends Phaser.Scene {
     this.playerMove();
     this.giantDetectsPlayer();
 
+    // Repeats the giant's walk-idle cycle
     if (this.giantWalkIdleCycleFinished) {
       this.giantWalkIdleCycleFinished = false;
       this.giantWalkIdleCycle();
@@ -296,6 +300,7 @@ class Scene2 extends Phaser.Scene {
       this.alreadyStartedSearching = true;
     }
 
+    // Friction for when the player dies
     if (!this.playerIsAlive) {
       this.player.setDragX(15);
     }
