@@ -10,6 +10,7 @@ const config = {
       debug: false,
     },
   },
+  pixelArt: true,
 };
 
 window.onload = function () {
