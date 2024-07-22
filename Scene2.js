@@ -8,12 +8,13 @@ class Scene2 extends Phaser.Scene {
 
     this.enter = this.input.keyboard.addKey("ENTER");
     this.enterJustDown = false;
+    // Set at 500 for testing purposes:
     this.giantSpawnLocationX = Phaser.Math.Between(2000, 3000);
     this.playerIsAlive = true;
     this.playerRecentXPosition = null;
     this.playerIsHiding = false;
     // Is set often to 400 for testing purposes:
-    this.playerVelocity = 50; // Return to 30 after finishing test
+    this.playerVelocity = 50; // Return to 50 after finishing test
     this.giantWalkVelocity = 40;
     this.giantChaseVelocity = 60;
     this.giantSearchVelocity = 55;
@@ -96,7 +97,6 @@ class Scene2 extends Phaser.Scene {
     this.giantWalkIdleCycle();
   }
 
-  // TODO - Add friction to the player with the ground when the player dies
   /**
    * Moves the giant with a given speed at a given direction
    *
@@ -294,6 +294,10 @@ class Scene2 extends Phaser.Scene {
     } else if (!this.giantSeesThePlayer && this.giantSearchesForPlayer) {
       this.giantSearchForPlayer();
       this.alreadyStartedSearching = true;
+    }
+
+    if (!this.playerIsAlive) {
+      this.player.setDragX(15);
     }
   }
 }
