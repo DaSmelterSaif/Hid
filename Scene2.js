@@ -64,6 +64,7 @@ class Scene2 extends Phaser.Scene {
     const scale = this.physics.world.bounds.width / this.platform.width;
     this.platform.setScale(scale, 1).refreshBody();
 
+    // TODO - Change the giant's hitbox size
     this.giant = this.physics.add
       .sprite(this.giantSpawnLocationX, 0, "giant")
       .setScale(2);
@@ -197,6 +198,7 @@ class Scene2 extends Phaser.Scene {
   }
 
   // TODO - Add a game over screen
+  // TODO - Make the player's hitbox smaller when dead
   /**
    * Causes the player to die if the player is not hiding.
    * Also, causes the player to fly up and rotate when he
