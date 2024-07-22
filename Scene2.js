@@ -152,7 +152,6 @@ class Scene2 extends Phaser.Scene {
       this.giantWalkIdleCycleFinished = false;
       clearTimeout(this.idleTimer);
       clearTimeout(this.walkTimer);
-      // TODO - Make sure that this does not cause a bug with the giant's movement
       console.log("Player detected!");
     } else if (this.playerEscaped || this.playerHid) {
       this.giantSeesThePlayer = false;
@@ -280,7 +279,6 @@ class Scene2 extends Phaser.Scene {
     if (this.giantWalkIdleCycleFinished) {
       this.giantWalkIdleCycleFinished = false;
       this.giantWalkIdleCycle();
-      // TODO - Make sure that this does not cause a bug with the giant's movement
     }
 
     if (this.giantSeesThePlayer) {
