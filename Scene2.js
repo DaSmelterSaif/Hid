@@ -14,7 +14,7 @@ class Scene2 extends Phaser.Scene {
     this.playerRecentXPosition = null;
     this.playerIsHiding = false;
     // Is set often to 400 for testing purposes:
-    this.playerVelocity = 50; // Return to 50 after finishing test
+    this.playerVelocity = 400; // Return to 50 after finishing test
     this.giantWalkVelocity = 40;
     this.giantChaseVelocity = 60;
     this.giantSearchVelocity = 55;
@@ -32,6 +32,7 @@ class Scene2 extends Phaser.Scene {
     this.walkTimer = null;
     this.giantSeesThePlayer = false;
     this.giantSearchesForPlayer = false;
+    this.giantAvoidWorldBoundsDistance = 200;
 
     this.physics.world.setBounds(0, -600, 4200, 1200);
 
@@ -80,9 +81,9 @@ class Scene2 extends Phaser.Scene {
     this.physics.add.collider(this.giant, this.platform);
     this.physics.add.collider(this.player, this.platform);
     // Commented often for testing purposes:
-    this.physics.add.overlap(this.player, this.giant, () => {
-      this.giantKill();
-    });
+    // this.physics.add.overlap(this.player, this.giant, () => {
+    //   this.giantKill();
+    // });
     this.bushPlayerCollider = this.physics.add.overlap(
       this.player,
       this.bush,
@@ -114,8 +115,40 @@ class Scene2 extends Phaser.Scene {
   giantMove(velocity, direction) {
     this.giant.setVelocityX(velocity * direction);
   }
+  /**
+   * Calculates the time it takes for the giant to stop moving
+   * just before the world bounds.
+   *
+   * @param {number} time
+   * @param {number} velocity
+   * @param {number} direction
+   * @returns {number}
+   */
+  timeForGiantToAvoidWorldBounds(time, velocity, direction) {
+    const newX = this.giant.x + velocity * direction * time;
+    const lessThanWorldBounds =
+      newX <
+      this.physics.world.bounds.width - this.giantAvoidWorldBoundsDistance;
+    const greaterThanWorldBounds = newX > this.giantAvoidWorldBoundsDistance;
+    console.log({ lessThanWorldBounds });
+    console.log({ greaterThanWorldBounds });
+    console.log({ newX });
+    if (!lessThanWorldBounds) {
+      return (
+        (this.physics.world.bounds.width -
+          this.giantAvoidWorldBoundsDistance -
+          this.giant.x) /
+        velocity
+      );
+    } else if (!greaterThanWorldBounds) {
+      return (this.giant.x - this.giantAvoidWorldBoundsDistance) / velocity;
+    }
 
-  // TODO - Make it so that the giant doesn't approach the world bounds
+    return time;
+  }
+
+  // TODO - Test if the giant doesn't move towards the world bounds
+  // TODO - Remove console logs
   giantWalkIdleCycle() {
     this.randomDirection = Phaser.Math.Between(0, 1) == 0 ? -1 : 1;
     this.randomIdleTime =
@@ -124,6 +157,13 @@ class Scene2 extends Phaser.Scene {
     this.randomWalkTime =
       Phaser.Math.Between(this.randomWalkTimeFrom, this.randomWalkTimeTo) *
       1000;
+
+    // Stops the giant from moving towards the world's bounds
+    this.randomWalkTime = this.timeForGiantToAvoidWorldBounds(
+      this.randomWalkTime / 1000,
+      this.giantWalkVelocity,
+      this.randomDirection
+    );
 
     this.giant.setVelocityX(0);
 
@@ -314,7 +354,7 @@ class Scene2 extends Phaser.Scene {
     }
 
     this.playerMove();
-    this.giantDetectsPlayer();
+    // this.giantDetectsPlayer();
 
     // Repeats the giant's walk-idle cycle
     if (this.giantWalkIdleCycleFinished) {
