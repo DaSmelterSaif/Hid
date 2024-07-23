@@ -10,6 +10,7 @@ body {
     hsl(115, 100%, 20%),
     hsl(115, 100%, 5%)
   );
+  overflow-y: hidden;
 }
 
 canvas {
@@ -17,11 +18,13 @@ canvas {
   top: 10vh;
   border: 3px solid black;
   border-radius: 10px;
+  aspect-ratio: 4/3;
 }
 
 .controls {
   position: absolute;
   bottom: 5px;
+  animation: spookyFadeIn 1s ease-out;
 }
 
 .controls ul {
@@ -33,4 +36,26 @@ canvas {
 
 .controls ul::before {
   content: attr(title);
+  display: block;
+  transform: translateX(25%);
+}
+
+@keyframes spookyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+
+@media only screen and (max-height: 830px) {
+  .controls {
+    top: 5px;
+    left: 5px;
+  }
+}
+
+@media only screen and (max-width: 800px) {
+  canvas {
+    width: 400px;
+  }
 }
