@@ -8,6 +8,8 @@ class Scene2 extends Phaser.Scene {
 
     this.enter = this.input.keyboard.addKey("ENTER");
     this.enterJustDown = false;
+
+    // TODO - Add a last player know location variable for the giant
     // Often set to 500 for testing purposes:
     this.giantSpawnLocationX = Phaser.Math.Between(2000, 3000);
     this.playerIsAlive = true;
