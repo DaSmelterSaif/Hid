@@ -8,7 +8,7 @@ class Scene2 extends Phaser.Scene {
 
     this.enter = this.input.keyboard.addKey("ENTER");
     this.enterJustDown = false;
-    // Set at 500 for testing purposes:
+    // Often set to 500 for testing purposes:
     this.giantSpawnLocationX = Phaser.Math.Between(2000, 3000);
     this.playerIsAlive = true;
     this.playerRecentXPosition = null;
@@ -25,8 +25,8 @@ class Scene2 extends Phaser.Scene {
     this.hidingDetectionRange = 300;
     this.randomIdleTimeFrom = 2; // in seconds
     this.randomIdleTimeTo = 6; // in seconds (inclusive)
-    this.randomWalkTimeFrom = 10; // in seconds
-    this.randomWalkTimeTo = 21; // in seconds (inclusive)
+    this.randomWalkTimeFrom = 20; // in seconds
+    this.randomWalkTimeTo = 31; // in seconds (inclusive)
     this.giantWalkIdleCycleFinished = false;
     this.idleTimer = null;
     this.walkTimer = null;
@@ -81,9 +81,9 @@ class Scene2 extends Phaser.Scene {
     this.physics.add.collider(this.giant, this.platform);
     this.physics.add.collider(this.player, this.platform);
     // Commented often for testing purposes:
-    // this.physics.add.overlap(this.player, this.giant, () => {
-    //   this.giantKill();
-    // });
+    this.physics.add.overlap(this.player, this.giant, () => {
+      this.giantKill();
+    });
     this.bushPlayerCollider = this.physics.add.overlap(
       this.player,
       this.bush,
@@ -124,31 +124,25 @@ class Scene2 extends Phaser.Scene {
    * @param {number} direction
    * @returns {number}
    */
-  timeForGiantToAvoidWorldBounds(time, velocity, direction) {
+  directionForGiantToAvoidWorldBounds(time, velocity, direction) {
     const newX = this.giant.x + velocity * direction * time;
     const lessThanWorldBounds =
       newX <
       this.physics.world.bounds.width - this.giantAvoidWorldBoundsDistance;
     const greaterThanWorldBounds = newX > this.giantAvoidWorldBoundsDistance;
-    console.log({ lessThanWorldBounds });
-    console.log({ greaterThanWorldBounds });
-    console.log({ newX });
+    // Uncomment for debugging:
+    // console.log({ lessThanWorldBounds });
+    // console.log({ greaterThanWorldBounds });
+    // console.log({ newX });
     if (!lessThanWorldBounds) {
-      return (
-        (this.physics.world.bounds.width -
-          this.giantAvoidWorldBoundsDistance -
-          this.giant.x) /
-        velocity
-      );
+      return -1;
     } else if (!greaterThanWorldBounds) {
-      return (this.giant.x - this.giantAvoidWorldBoundsDistance) / velocity;
+      return 1;
     }
 
-    return time;
+    return direction;
   }
 
-  // TODO - Test if the giant doesn't move towards the world bounds
-  // TODO - Remove console logs
   giantWalkIdleCycle() {
     this.randomDirection = Phaser.Math.Between(0, 1) == 0 ? -1 : 1;
     this.randomIdleTime =
@@ -159,11 +153,13 @@ class Scene2 extends Phaser.Scene {
       1000;
 
     // Stops the giant from moving towards the world's bounds
-    this.randomWalkTime = this.timeForGiantToAvoidWorldBounds(
+    this.randomDirection = this.directionForGiantToAvoidWorldBounds(
       this.randomWalkTime / 1000,
       this.giantWalkVelocity,
       this.randomDirection
     );
+    // Uncomment for debugging:
+    // console.log(this.randomDirection);
 
     this.giant.setVelocityX(0);
 
@@ -185,13 +181,16 @@ class Scene2 extends Phaser.Scene {
       this.playerIsAlive &&
       !this.playerIsHiding &&
       Math.abs(this.distanceBetweenPlayerAndGiant) < this.giantDetectRadius;
+
     this.playerIsWithinBushRange =
       this.giantSeesThePlayer &&
       this.playerIsHiding &&
       Math.abs(this.hidingDistance) < this.hidingDetectionRange;
+
     this.playerEscaped =
       this.giantSeesThePlayer &&
       Math.abs(this.distanceBetweenPlayerAndGiant) > this.giantLoseRadius;
+
     this.playerHid =
       this.giantSeesThePlayer &&
       this.playerIsHiding &&
@@ -251,25 +250,27 @@ class Scene2 extends Phaser.Scene {
    * dies.
    */
   giantKill() {
-    if (this.playerIsAlive && !this.playerIsHiding) {
-      this.playerIsAlive = false;
-      this.player.setVelocityY(-300);
-      this.player.setAngularVelocity(-600);
-      // Experimental game over screen:
-      // this.gameOver();
-      this.time.addEvent({
-        delay: 1000,
-        callback: () => {
-          this.player.setAngularDrag(800);
-        },
-      });
-      this.player.body.setSize(this.player.body.height / 2, 1);
-    } else if (
-      this.playerIsAlive &&
-      this.playerIsHiding &&
-      this.giantSeesThePlayer
-    ) {
-      this.revealPlayer();
+    if (this.giantSeesThePlayer) {
+      if (this.playerIsAlive && !this.playerIsHiding) {
+        this.playerIsAlive = false;
+        this.player.setVelocityY(-300);
+        this.player.setAngularVelocity(-600);
+        // Experimental game over screen:
+        // this.gameOver();
+        this.time.addEvent({
+          delay: 1000,
+          callback: () => {
+            this.player.setAngularDrag(800);
+          },
+        });
+        this.player.body.setSize(this.player.body.height / 2, 1);
+      } else if (
+        this.playerIsAlive &&
+        this.playerIsHiding &&
+        this.giantSeesThePlayer
+      ) {
+        this.revealPlayer();
+      }
     }
   }
 
@@ -354,7 +355,7 @@ class Scene2 extends Phaser.Scene {
     }
 
     this.playerMove();
-    // this.giantDetectsPlayer();
+    this.giantDetectsPlayer();
 
     // Repeats the giant's walk-idle cycle
     if (this.giantWalkIdleCycleFinished) {
