@@ -14,7 +14,7 @@ class Scene2 extends Phaser.Scene {
     this.playerRecentXPosition = null;
     this.playerIsHiding = false;
     // Is set often to 400 for testing purposes:
-    this.playerVelocity = 400; // Return to 50 after finishing test
+    this.playerVelocity = 50; // Return to 50 after finishing test
     this.giantWalkVelocity = 40;
     this.giantChaseVelocity = 60;
     this.giantSearchVelocity = 55;
