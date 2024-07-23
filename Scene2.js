@@ -64,11 +64,18 @@ class Scene2 extends Phaser.Scene {
     const scale = this.physics.world.bounds.width / this.platform.width;
     this.platform.setScale(scale, 1).refreshBody();
 
-    // TODO - Change the giant's hitbox size
     this.giant = this.physics.add
       .sprite(this.giantSpawnLocationX, 0, "giant")
       .setScale(2);
     this.player = this.physics.add.sprite(100, 500, "player").setScale(2);
+
+    this.giant.body.setSize(66, this.giant.body.height, true);
+    this.giant.body.setOffset(35, 0);
+    this.player.body.setSize(
+      this.player.body.width / 2,
+      this.player.body.height
+    );
+    this.player.body.setOffset(6, 0);
 
     this.physics.add.collider(this.giant, this.platform);
     this.physics.add.collider(this.player, this.platform);
@@ -197,8 +204,7 @@ class Scene2 extends Phaser.Scene {
     }
   }
 
-  // TODO - Add a game over screen
-  // TODO - Make the player's hitbox smaller when dead
+  // TODO - Fix the game over screen
   /**
    * Causes the player to die if the player is not hiding.
    * Also, causes the player to fly up and rotate when he
@@ -209,16 +215,15 @@ class Scene2 extends Phaser.Scene {
       this.playerIsAlive = false;
       this.player.setVelocityY(-300);
       this.player.setAngularVelocity(-600);
+      // Experimental game over screen:
+      // this.gameOver();
       this.time.addEvent({
         delay: 1000,
         callback: () => {
           this.player.setAngularDrag(800);
         },
       });
-      this.player.body.setSize(
-        this.player.body.height / 2,
-        this.player.body.width / 2
-      );
+      this.player.body.setSize(this.player.body.height / 2, 1);
     } else if (
       this.playerIsAlive &&
       this.playerIsHiding &&
@@ -226,6 +231,27 @@ class Scene2 extends Phaser.Scene {
     ) {
       this.revealPlayer();
     }
+  }
+
+  gameOver() {
+    console.log("Game over!");
+    this.blackScreen = this.add.rectangle(
+      0,
+      0,
+      this.physics.world.bounds.width * 2,
+      this.physics.world.bounds.height,
+      0x000000,
+      0
+    );
+
+    this.tweens.add({
+      target: this.blackScreen,
+      alpha: 1,
+      duration: 2000,
+      onComplete: () => {
+        this.scene.start("gameover");
+      },
+    });
   }
 
   /**

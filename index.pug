@@ -7,12 +7,19 @@ html(lang="en")
         script(src="phaser.min.js")
         script(src="Scene1.js")
         script(src="Scene2.js")
+        script(src="Scene3.js")
         script(src="main.js")
         link(rel="stylesheet", href="normalize.css")
         link(rel="stylesheet", href="style.css")
     body 
         .controls
-            ul(title="Controls")
+            ul(id="controls", title="Controls")
                 li Right - →
                 li Left - ←
                 li Hide in bush - ENTER
+            details.smallViewportControls
+                summary#hide Show
+                ul(id="controls", title="Controls")
+                    li Right - →
+                    li Left - ←
+                    li Hide in bush - ENTER
