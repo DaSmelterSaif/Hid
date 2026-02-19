@@ -1,7 +1,7 @@
 # Hid
 
-Hid. You wake up in an unknown forest where peculiar things happen.  
-STILL IN DEVELOPMENT.
+Hid. You wake up in an unknown forest where peculiar things happen.
+ABANDONED INDEFINITELY.
 
 Controls:
 
